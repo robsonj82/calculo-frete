@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: fretemaster-db
+    environment:
+      POSTGRES_USER: fretemaster
+      POSTGRES_PASSWORD: fretemaster_pass
+      POSTGRES_DB: fretemaster
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fretemaster-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fretemaster"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fretemaster-backend
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fretemaster
+      - DB_PASS=fretemaster_pass
+      - DB_NAME=fretemaster
+      - JWT_SECRET=fretemaster_secret_change_in_production
+      - JWT_EXPIRES_IN=24h
+      - CORS_ORIGIN=http://localhost:5173
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - fretemaster-network
+    command: npm run dev
+
+  # Frontend (React + Vite)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fretemaster-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:4000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - fretemaster-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+networks:
+  fretemaster-network:
+    driver: bridge
