@@ -1,98 +1,126 @@
-# Guia de Deploy - Hospedagem Compartilhada (cPanel)
+# Guia de Deploy Detalhado - cPanel (Via Git UI + Node.js App)
 
-Este guia descreve como publicar o FreteMaster em uma hospedagem cPanel padrão.
-**Nota:** Hospedagens compartilhadas geralmente **não suportam Docker**. Faremos o deploy manual do Node.js (Backend) e dos arquivos estáticos (Frontend).
+Este guia utiliza as ferramentas visuais do cPanel (**Git Version Control** e **Setup Node.js App**), facilitando o processo sem necessidade de muitos comandos via terminal.
 
-## Pré-requisitos no cPanel
-1.  **Node.js**: Verifique se o seu cPanel possui a ferramenta "Setup Node.js App" ou similar.
-2.  **Banco de Dados**: Recomenda-se usar **MySQL** (padrão do cPanel) ou **SQLite** (arquivo local, mais simples).
-3.  **Subdomínios**:
-    *   `calculadora.joaycordas.com.br` (para o Frontend)
-    *   `api.joaycordas.com.br` (para o Backend)
+## 📋 Pré-requisitos
+1.  **Acesso ao cPanel** da `joaycordas.com.br`.
+2.  **Repositório GitHub**: `https://github.com/robsonj82/calculo-frete.git`.
 
 ---
 
-## Passo 1: Preparar o Backend
+## 🗄️ Passo 1: Configurar o Banco de Dados (MySQL)
 
-1.  **Ajustar para Produção**:
-    *   No arquivo `backend/.env`, mude `NODE_ENV` para `production`.
-    *   Defina `CORS_ORIGIN=https://calculadora.joaycordas.com.br`.
-    *   Se for usar MySQL, instale o driver: `npm install mysql2` (localmente) e atualize as variáveis de DB no `.env`.
-    *   Se for usar SQLite, o arquivo do banco será criado na pasta do projeto.
+1.  No cPanel, vá em **"Assistente de Banco de Dados MySQL"** (ou "MySQL Database Wizard").
+2.  **Passo 1 (Criar Banco)**:
+    *   Nome: `joaycordas_fretemaster`
+    *   Clique em "Próxima Etapa".
+3.  **Passo 2 (Criar Usuário)**:
+    *   Usuário: `joaycordas_admin`
+    *   Senha: `SuaSenhaForteAqui` (Anote a senha!)
+    *   Clique em "Criar Usuário".
+4.  **Passo 3 (Privilégios)**:
+    *   Marque a opção **"TODOS OS PRIVILÉGIOS"** (All Privileges).
+    *   Clique em "Próxima Etapa".
 
-2.  **Upload**:
-    *   Compacte (ZIP) a pasta `backend` (excluindo `node_modules`).
-    *   No cPanel (Gerenciador de Arquivos), crie uma pasta (ex: `fretemaster-api`) fora do `public_html` (na raiz do usuário) para maior segurança.
-    *   Faça o upload e extraia o ZIP lá.
+---
 
-3.  **Configurar Node.js no cPanel**:
-    *   Acesse "Setup Node.js App".
-    *   **Create Application**:
-        *   **Node.js Version**: 18.x ou superior.
-        *   **Application Mode**: Production.
-        *   **Application Root**: `fretemaster-api` (o caminho onde você extraiu).
-        *   **Application URL**: `api.joaycordas.com.br`.
+## 🚀 Passo 2: Baixar o Código (Via Git Version Control)
+
+*Isso substitui o uso do terminal para baixar o código.*
+
+1.  No cPanel, vá em **"Git Version Control"**.
+2.  Clique em **"Create"**.
+3.  Preencha os campos:
+    *   **Clone URL**: `https://github.com/robsonj82/calculo-frete.git`
+    *   **Repository Path**: `repositories/calculo-frete` (Importante: Não use public_html. Deixe este caminho sugerido ou similar).
+    *   **Repository Name**: `calculo-frete` (Preenchido automaticamente).
+4.  Clique em **"Create"**.
+    *   O cPanel vai baixar o código do GitHub para o seu servidor.
+
+---
+
+## ⚙️ Passo 3: Configurar o Backend (Setup Node.js App)
+
+1.  **Criar arquivo .env de Produção**:
+    *   Vá no **"Gerenciador de Arquivos"**.
+    *   Navegue até a pasta onde baixou o código: `repositories/calculo-frete/backend`.
+    *   Crie um novo arquivo chamado `.env`.
+    *   Edite e cole o conteúdo abaixo (ajuste a senha do banco):
+
+```env
+NODE_ENV=production
+PORT=4000
+# Dados do Banco MySQL (Passo 1)
+DB_DIALECT=mysql
+DB_HOST=localhost
+DB_NAME=joaycordas_fretemaster
+DB_USER=joaycordas_admin
+DB_PASS=SuaSenhaAqui
+# Segurança
+JWT_SECRET=UmaSenhaSuperSecretaParaOJWT
+JWT_EXPIRES_IN=24h
+# URLs
+CORS_ORIGIN=https://calculadora.joaycordas.com.br
+WC_BASE_URL=https://joaycordas.com.br
+# Credenciais WooCommerce
+WC_CONSUMER_KEY=ck_...
+WC_CONSUMER_SECRET=cs_...
+```
+
+2.  **Configurar no "Setup Node.js App"**:
+    *   Vá no painel principal e abra **"Setup Node.js App"**.
+    *   Clique em **"CREATE APPLICATION"**.
+    *   Preencha:
+        *   **Node.js Version**: `18.x` (ou maior).
+        *   **Application Mode**: `Production`.
+        *   **Application Root**: `repositories/calculo-frete/backend`
+        *   **Application URL**: Selecione `api.joaycordas.com.br`.
         *   **Application Startup File**: `src/app.js`.
-    *   Clique em **Create**.
+    *   Clique em **CREATE**.
 
-4.  **Instalar Dependências**:
-    *   Ainda na tela do Node.js App, clique em **Run NPM Install**.
-    *   Isso vai ler o `package.json` e instalar tudo.
+3.  **Instalar Dependências**:
+    *   Após criar, clique no botão **"Run NPM Install"**.
 
-5.  **Variáveis de Ambiente**:
-    *   Muitos cPanels não leem o arquivo `.env` automaticamente. Você pode precisar definir as variáveis (DB_HOST, JWT_SECRET, etc.) na interface do "Setup Node.js App" (seção Environment Variables) ou garantir que o `dotenv` esteja carregando o arquivo corretamente (o código já faz isso).
-    *   **Importante**: Defina `CORS_ORIGIN` como `https://calculadora.joaycordas.com.br`.
-
-6.  **Iniciar**:
-    *   Clique em **Restart**.
-    *   Teste acessando `https://api.joaycordas.com.br/ping`. Deve retornar "pong".
+4.  **Iniciar**:
+    *   Clique em **RESTART**.
+    *   **Teste**: Acesse `https://api.joaycordas.com.br/ping`. Deve retornar "pong".
 
 ---
 
-## Passo 2: Preparar o Frontend
+## 🖥️ Passo 4: Configurar o Frontend (React)
 
-1.  **Configurar URL da API**:
-    *   Abra o arquivo `frontend/.env` (ou crie um `.env.production`).
-    *   Defina: `VITE_API_URL=https://api.joaycordas.com.br`.
+**Opção A: Build Local + Upload (Recomendado)**
 
-2.  **Build**:
-    *   No seu computador, rode:
-        ```bash
-        cd frontend
-        npm run build
-        ```
-    *   Isso criará uma pasta `dist` com os arquivos otimizados (HTML, CSS, JS).
+1.  **No seu computador**:
+    *   Abra `frontend/.env` e garanta: `VITE_API_URL=https://api.joaycordas.com.br`
+    *   Rode: `npm run build`
 
-3.  **Upload**:
-    *   Vá no cPanel > Gerenciador de Arquivos.
-    *   Acesse a pasta do subdomínio do frontend (provavelmente `public_html/calculadora` ou similar).
-    *   Faça o upload de **todo o conteúdo** de dentro da pasta `dist` para lá.
+2.  **Enviar para o Servidor**:
+    *   Compacte a pasta `dist` gerada (`dist.zip`).
+    *   No cPanel (**Gerenciador de Arquivos**), vá para a pasta do subdomínio `calculadora.joaycordas.com.br`.
+    *   Faça Upload e Extraia. Mova os arquivos para que fiquem na raiz do subdomínio.
 
-4.  **Configuração de Rotas (Importante)**:
-    *   Como é uma aplicação React (SPA), você precisa redirecionar todas as requisições para o `index.html`.
-    *   Crie um arquivo `.htaccess` na mesma pasta onde colocou os arquivos do frontend com o conteúdo:
-        ```apache
-        <IfModule mod_rewrite.c>
-          RewriteEngine On
-          RewriteBase /
-          RewriteRule ^index\.html$ - [L]
-          RewriteCond %{REQUEST_FILENAME} !-f
-          RewriteCond %{REQUEST_FILENAME} !-d
-          RewriteRule . /index.html [L]
-        </IfModule>
-        ```
+3.  **Configurar Redirecionamento (.htaccess)**:
+    *   Crie/Edite o arquivo `.htaccess` na pasta do subdomínio:
+
+```apache
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+```
 
 ---
 
-## Passo 3: Integração
+## 🔄 Como Atualizar?
 
-1.  Acesse `https://calculadora.joaycordas.com.br`.
-2.  Tente fazer login.
-3.  Se der erro de CORS, verifique no Backend se a variável `CORS_ORIGIN` está apontando para `https://calculadora.joaycordas.com.br`. Se mudou, atualize no cPanel e reinicie o Node app.
+1.  **Backend**:
+    *   Vá em **"Git Version Control"** > **Manage** > Aba **Pull or Deploy** > Clique em **"Update from Remote"**.
+    *   Vá em **"Setup Node.js App"** e clique em **Restart**.
 
----
-
-## Resumo de Arquivos para Upload
-
-1.  **Backend**: ZIP da pasta `backend` (sem node_modules).
-2.  **Frontend**: Conteúdo da pasta `frontend/dist` (após build).
+2.  **Frontend**:
+    *   Faça o build local e suba os arquivos novamente.
