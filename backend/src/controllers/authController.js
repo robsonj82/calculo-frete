@@ -14,7 +14,7 @@ const generateToken = (id) => {
 
 const register = async (req, res) => {
     try {
-        const { nome, email, senha, perfil } = req.body;
+        const { name, email, password, role } = req.body;
 
         // Check if user already exists
         const userExists = await User.findOne({ where: { email } });
@@ -26,12 +26,11 @@ const register = async (req, res) => {
         }
 
         // Create user
-        // Note: senha_hash field is used to store the password, which will be hashed by the model hook
         const user = await User.create({
-            nome,
+            nome: name,
             email,
-            senha_hash: senha,
-            perfil: perfil || 'operador'
+            senha_hash: password,
+            perfil: role || 'operador'
         });
 
         // Generate token
@@ -60,10 +59,10 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const { email, senha } = req.body;
+        const { email, password } = req.body;
 
         // Check if email and password are provided
-        if (!email || !senha) {
+        if (!email || !password) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Por favor, forneça email e senha'
@@ -74,7 +73,7 @@ const login = async (req, res) => {
         const user = await User.findOne({ where: { email } });
 
         // Check if user exists and password is correct
-        if (!user || !(await user.checkPassword(senha))) {
+        if (!user || !(await user.checkPassword(password))) {
             return res.status(401).json({
                 status: 'error',
                 message: 'Credenciais inválidas'
