@@ -13,12 +13,15 @@ const ping = (req, res) => {
 
 const health = async (req, res) => {
     try {
-        // Mock database check for MVP
-        // In production, this would check actual database connection
+        // Real database check
+        const { sequelize } = require('../models');
+        await sequelize.authenticate();
+
         const dbStatus = {
             connected: true,
-            database: process.env.DB_NAME || 'fretemaster',
-            host: process.env.DB_HOST || 'postgres'
+            database: process.env.DB_NAME,
+            host: process.env.DB_HOST,
+            dialect: process.env.DB_DIALECT
         };
 
         res.status(200).json({
