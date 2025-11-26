@@ -64,6 +64,10 @@ db.sequelize.sync().then(() => {
         console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
         console.log(`🔗 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
     });
+}).catch((err) => {
+    console.error('❌ Unable to connect to the database:', err);
+    // Em produção, talvez queiramos iniciar o servidor mesmo sem banco para health checks,
+    // mas por enquanto vamos deixar falhar para ver o erro no log.
 });
 
 module.exports = app;
