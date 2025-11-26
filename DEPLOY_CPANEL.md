@@ -6,9 +6,9 @@ Este guia descreve como publicar o FreteMaster em uma hospedagem cPanel padrão.
 ## Pré-requisitos no cPanel
 1.  **Node.js**: Verifique se o seu cPanel possui a ferramenta "Setup Node.js App" ou similar.
 2.  **Banco de Dados**: Recomenda-se usar **MySQL** (padrão do cPanel) ou **SQLite** (arquivo local, mais simples).
-3.  **Subdomínios**: Recomenda-se criar:
-    *   `app.seudominio.com.br` (para o Frontend)
-    *   `api.seudominio.com.br` (para o Backend)
+3.  **Subdomínios**:
+    *   `calculadora.joaycordas.com.br` (para o Frontend)
+    *   `api.joaycordas.com.br` (para o Backend)
 
 ---
 
@@ -16,6 +16,7 @@ Este guia descreve como publicar o FreteMaster em uma hospedagem cPanel padrão.
 
 1.  **Ajustar para Produção**:
     *   No arquivo `backend/.env`, mude `NODE_ENV` para `production`.
+    *   Defina `CORS_ORIGIN=https://calculadora.joaycordas.com.br`.
     *   Se for usar MySQL, instale o driver: `npm install mysql2` (localmente) e atualize as variáveis de DB no `.env`.
     *   Se for usar SQLite, o arquivo do banco será criado na pasta do projeto.
 
@@ -30,7 +31,7 @@ Este guia descreve como publicar o FreteMaster em uma hospedagem cPanel padrão.
         *   **Node.js Version**: 18.x ou superior.
         *   **Application Mode**: Production.
         *   **Application Root**: `fretemaster-api` (o caminho onde você extraiu).
-        *   **Application URL**: `api.seudominio.com.br` (selecione o subdomínio criado).
+        *   **Application URL**: `api.joaycordas.com.br`.
         *   **Application Startup File**: `src/app.js`.
     *   Clique em **Create**.
 
@@ -40,10 +41,11 @@ Este guia descreve como publicar o FreteMaster em uma hospedagem cPanel padrão.
 
 5.  **Variáveis de Ambiente**:
     *   Muitos cPanels não leem o arquivo `.env` automaticamente. Você pode precisar definir as variáveis (DB_HOST, JWT_SECRET, etc.) na interface do "Setup Node.js App" (seção Environment Variables) ou garantir que o `dotenv` esteja carregando o arquivo corretamente (o código já faz isso).
+    *   **Importante**: Defina `CORS_ORIGIN` como `https://calculadora.joaycordas.com.br`.
 
 6.  **Iniciar**:
     *   Clique em **Restart**.
-    *   Teste acessando `https://api.seudominio.com.br/ping`. Deve retornar "pong".
+    *   Teste acessando `https://api.joaycordas.com.br/ping`. Deve retornar "pong".
 
 ---
 
@@ -51,7 +53,7 @@ Este guia descreve como publicar o FreteMaster em uma hospedagem cPanel padrão.
 
 1.  **Configurar URL da API**:
     *   Abra o arquivo `frontend/.env` (ou crie um `.env.production`).
-    *   Defina: `VITE_API_URL=https://api.seudominio.com.br` (a URL do seu backend).
+    *   Defina: `VITE_API_URL=https://api.joaycordas.com.br`.
 
 2.  **Build**:
     *   No seu computador, rode:
@@ -63,7 +65,7 @@ Este guia descreve como publicar o FreteMaster em uma hospedagem cPanel padrão.
 
 3.  **Upload**:
     *   Vá no cPanel > Gerenciador de Arquivos.
-    *   Acesse a pasta do subdomínio do frontend (ex: `public_html/app` ou a raiz do subdomínio `app.seudominio.com.br`).
+    *   Acesse a pasta do subdomínio do frontend (provavelmente `public_html/calculadora` ou similar).
     *   Faça o upload de **todo o conteúdo** de dentro da pasta `dist` para lá.
 
 4.  **Configuração de Rotas (Importante)**:
@@ -84,9 +86,9 @@ Este guia descreve como publicar o FreteMaster em uma hospedagem cPanel padrão.
 
 ## Passo 3: Integração
 
-1.  Acesse `https://app.seudominio.com.br`.
+1.  Acesse `https://calculadora.joaycordas.com.br`.
 2.  Tente fazer login.
-3.  Se der erro de CORS, verifique no Backend se a variável `CORS_ORIGIN` está apontando para `https://app.seudominio.com.br`. Se mudou, atualize no cPanel e reinicie o Node app.
+3.  Se der erro de CORS, verifique no Backend se a variável `CORS_ORIGIN` está apontando para `https://calculadora.joaycordas.com.br`. Se mudou, atualize no cPanel e reinicie o Node app.
 
 ---
 
